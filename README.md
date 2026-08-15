@@ -77,16 +77,3 @@ function dijkstra(graph, source):
 
 Time complexity (with a binary heap / min-priority queue) is $O((E + V)\log V)$ where $V$ is the number of vertices and $E$ is the number of edges. The algorithm requires non-negative edge weights.
 
-## Notes & tips
-
-- The app supports multiple transport modes. When adding connections, choose the relevant mode and provide time/fare/distance values.
-- For instructional runs, use `Animate Dijkstra` to see the visited nodes, current node, and tentative distances update in real time.
-- If images do not appear in the README viewer, ensure the `assets/` folder exists and the filenames match exactly.
-
-## Attribution
-
-Made as a simple interactive demo to teach weighted-graph routing and multimodal transport modeling.
-
----
-
-If you want, I can also add the actual screenshot files into `assets/` for you (I can embed them if you provide base64 images), or update the README to use inline images. Want me to add them now?
