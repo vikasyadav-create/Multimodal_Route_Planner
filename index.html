@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multimodal Transportation Route Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="brand-mark">◎</span>
+    <div class="brand-text">
+      <h1>Multimodal Transportation Route Optimizer</h1>
+      <p>Weighted graph routing &middot; Dijkstra's algorithm, live</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="btn-load-example" class="btn btn-ghost">Load example network</button>
+    <button id="btn-clear-graph" class="btn btn-ghost btn-danger">Clear graph</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ LEFT CONTROL RAIL ============ -->
+  <aside class="rail">
+
+    <section class="rail-card">
+      <h2><span class="step-tag">01</span>Add station</h2>
+      <div class="field">
+        <label for="node-name">Station name</label>
+        <input id="node-name" type="text" placeholder="e.g. Central Station" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="node-desc">Description <span class="optional">optional</span></label>
+        <input id="node-desc" type="text" placeholder="e.g. Main interchange hub" maxlength="60">
+      </div>
+      <button id="btn-add-node" class="btn btn-primary btn-block">+ Add station</button>
+      <p id="node-msg" class="field-msg"></p>
+    </section>
+
+    <section class="rail-card">
+      <h2><span class="step-tag">02</span>Connect stations</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="edge-from">From</label>
+          <select id="edge-from"></select>
+        </div>
+        <div class="field">
+          <label for="edge-to">To</label>
+          <select id="edge-to"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="edge-mode">Mode of transport</label>
+        <select id="edge-mode">
+          <option value="Walking">🚶 Walking</option>
+          <option value="Bus">🚌 Bus</option>
+          <option value="Metro">🚇 Metro</option>
+          <option value="Train">🚆 Train</option>
+          <option value="Taxi">🚕 Taxi</option>
+          <option value="Bicycle">🚲 Bicycle</option>
+        </select>
+      </div>
+      <div class="field-row field-row-3">
+        <div class="field">
+          <label for="edge-time">Time (min)</label>
+          <input id="edge-time" type="number" min="1" step="1" placeholder="10">
+        </div>
+        <div class="field">
+          <label for="edge-fare">Fare (₹)</label>
+          <input id="edge-fare" type="number" min="0" step="1" placeholder="20">
+        </div>
+        <div class="field">
+          <label for="edge-distance">Distance (km)</label>
+          <input id="edge-distance" type="number" min="0.1" step="0.1" placeholder="4.5">
+        </div>
+      </div>
+      <button id="btn-add-edge" class="btn btn-primary btn-block">+ Add connection</button>
+      <p id="edge-msg" class="field-msg"></p>
+    </section>
+
+    <section class="rail-card">
+      <h2><span class="step-tag">03</span>Find route</h2>
+      <div class="field">
+        <label for="route-source">Source</label>
+        <select id="route-source"></select>
+      </div>
+      <div class="field">
+        <label for="route-target">Destination</label>
+        <select id="route-target"></select>
+      </div>
+      <div class="field">
+        <label>Optimize for</label>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="criterion" value="time" checked><span>⏱ Fastest</span></label>
+          <label class="radio-pill"><input type="radio" name="criterion" value="fare"><span>₹ Cheapest</span></label>
+          <label class="radio-pill"><input type="radio" name="criterion" value="distance"><span>📍 Shortest</span></label>
+        </div>
+      </div>
+      <button id="btn-find-route" class="btn btn-accent btn-block">Find optimal route</button>
+      <button id="btn-animate" class="btn btn-ghost btn-block">▶ Animate Dijkstra</button>
+      <p id="route-msg" class="field-msg"></p>
+    </section>
+
+  </aside>
+
+  <!-- ============ GRAPH CANVAS ============ -->
+  <section class="canvas-wrap">
+    <div class="canvas-toolbar">
+      <span class="canvas-title">Transit network</span>
+      <span class="canvas-hint">Drag stations to rearrange &middot; click a line for details</span>
+    </div>
+    <div class="canvas-scroll" id="canvas-scroll">
+      <svg id="graph-svg" width="1600" height="1100"></svg>
+    </div>
+    <div id="edge-info" class="edge-info hidden">
+      <button id="edge-info-close" class="edge-info-close">&times;</button>
+      <div id="edge-info-body"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="dash">
+
+  <section class="dash-card" id="viz-panel">
+    <h2>Dijkstra visualization</h2>
+    <div class="viz-controls">
+      <button id="viz-play" class="btn btn-mini">▶ Play</button>
+      <button id="viz-pause" class="btn btn-mini">⏸ Pause</button>
+      <button id="viz-step" class="btn btn-mini">⏭ Step</button>
+      <button id="viz-reset" class="btn btn-mini">⟲ Reset</button>
+    </div>
+    <div class="viz-body">
+      <div class="viz-row"><span class="viz-label">Current node</span><span id="viz-current" class="viz-value mono">—</span></div>
+      <div class="viz-row"><span class="viz-label">Visited</span><span id="viz-visited" class="viz-value mono">—</span></div>
+      <div class="viz-row viz-relax"><span class="viz-label">Relaxing</span><span id="viz-relaxing" class="viz-value mono">—</span></div>
+      <div class="viz-distances">
+        <span class="viz-label">Tentative distances</span>
+        <div id="viz-dist-table" class="dist-table"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dash-card" id="result-panel">
+    <h2>Optimal route</h2>
+    <div id="route-result" class="route-result">
+      <p class="empty-state">Add stations and connections, then find a route.</p>
+    </div>
+  </section>
+
+  <section class="dash-card" id="stats-panel">
+    <h2>Statistics &amp; complexity</h2>
+    <div class="stat-grid">
+      <div class="stat"><span id="stat-nodes" class="stat-value">0</span><span class="stat-label">Stations</span></div>
+      <div class="stat"><span id="stat-edges" class="stat-value">0</span><span class="stat-label">Connections</span></div>
+      <div class="stat"><span id="stat-modes" class="stat-value">0</span><span class="stat-label">Modes used</span></div>
+      <div class="stat"><span id="stat-visited" class="stat-value">–</span><span class="stat-label">Nodes visited (last run)</span></div>
+      <div class="stat"><span id="stat-relaxed" class="stat-value">–</span><span class="stat-label">Edges relaxed (last run)</span></div>
+      <div class="stat"><span id="stat-time" class="stat-value">–</span><span class="stat-label">Execution time</span></div>
+    </div>
+    <div class="complexity-box">
+      <h3>Dijkstra's algorithm</h3>
+      <p>Finds the shortest path from a source node to every reachable node in a graph with non-negative edge weights, by repeatedly visiting the closest unvisited node and relaxing its outgoing edges.</p>
+      <div class="complexity-row"><span>Time complexity</span><code>O((V + E) log V)</code></div>
+      <div class="complexity-row"><span>Space complexity</span><code>O(V + E)</code></div>
+      <p class="complexity-note">V = stations, E = connections. The log V factor comes from the binary min-heap priority queue.</p>
+    </div>
+  </section>
+
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
